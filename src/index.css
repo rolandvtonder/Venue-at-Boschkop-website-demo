@@ -114,13 +114,6 @@ select {
     transform: scale(1.14);
   }
 }
-/* The slideshow's progress segment */
-@keyframes fill {
-  from {
-    transform: scaleX(0);
-  }
-}
-
 .grain {
   position: fixed;
   inset: -50%;

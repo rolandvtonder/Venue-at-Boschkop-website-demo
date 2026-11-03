@@ -1,5 +1,10 @@
-# Builds the site and publishes it to the gh-pages branch, which GitHub Pages
-# serves at https://<user>.github.io/<repo>/. Runs on every push to main.
+# Builds the site and publishes it to GitHub Pages at
+# https://<user>.github.io/<repo>/ on every push to main.
+#
+# It works with either Pages setting (Settings → Pages → Source):
+# - "GitHub Actions": the deploy-pages step publishes it.
+# - "Deploy from a branch" → gh-pages: the gh-pages step publishes it.
+# Whichever one the repo isn't using is allowed to fail quietly.
 name: Deploy to GitHub Pages
 
 on:
@@ -9,6 +14,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: pages
@@ -17,6 +24,9 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.pages.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -27,7 +37,17 @@ jobs:
       - run: npm run build
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
+      - run: touch dist/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+      - id: pages
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+
       - uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
+          force_orphan: true
